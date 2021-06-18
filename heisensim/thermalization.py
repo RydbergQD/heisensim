@@ -39,64 +39,81 @@ def diagonal_ensemble(eon):
     return abs(eon) ** 2
 
 
-def evaluate_steady_state(results):
-    E_0 = xr.dot(results.e_vals, results.eon, dims="state")
-    E_fluctuations = xr.dot(results.e_vals ** 2, results.eon, dims="state")
-    E_fluctuations = np.sqrt(E_fluctuations - E_0 ** 2)
-
-    beta = get_beta_xr(results, E_0)
-    weights_canonical = xr.apply_ufunc(
-        get_weights_canonical, results.e_vals.groupby("pos_i"), beta.groupby("pos_i")
-    )
-    canonical = xr.dot(weights_canonical, results.eev, dims="state")
-    diagonal = xr.dot(results.eev, results.eon, dims="state")
-    weights_micro = xr.apply_ufunc(
-        get_micro_ensemble,
-        results.e_vals.groupby("pos_i"),
-        kwargs={"E_0": 0, "delta_E": 0.1},
-    )
-    micro = xr.dot(weights_micro, results.eev, dims="state")
-
-    return xr.Dataset(
-        {
-            "E_0": E_0,
-            "E_fluctuations": E_fluctuations,
-            "beta": beta,
-            "canonical": canonical,
-            "diagonal": diagonal,
-            "micro": micro,
-        }
-    )
-
-@xr.register_dataset_accessor("ensembles")
 class ThermalEnsemble:
-    state_dim = 'state'
-    def __init__(self, xarray_obj):
+    state_dim = "state"
+
+    def __init__(self, xarray_obj, beta_0=0, delta_E=10):
         self._obj = xarray_obj
-        outer_dims = list(set(cusp.dims.keys()) - {'state'})
+        self.beta_0 = beta_0
+        self.delta_E = delta_E
+
+        self.outer_dim = self.extract_outer_dim()
+
+    def extract_outer_dim(self):
+        outer_dims = list(set(self._obj.dims.keys()) - {self.state_dim})
         if len(outer_dims) != 1:
-            raise Warning("All functions that depend on xarray groupby capabilities won't work")
-        self.outer_dim = outer_dims[0]
+            raise Warning(
+                "All functions that depend on xarray groupby capabilities won't work"
+            )
+        return outer_dims[0]
 
     @cached_property
     def E_0(self):
         """Return the energy of the initial state."""
-        return xr.dot(self._obj.e_vals, self._obj.eon, dims="state")
-    
+        return xr.dot(self._obj.e_vals, self._obj.eon, dims=self.state_dim)
+
     @cached_property
     def E_fluctuations(self):
         """Return the energy fluctuations of the initial state."""
-        E_fluctuations = xr.dot(results.e_vals ** 2, results.eon, dims="state")
-        return np.sqrt(E_fluctuations - E_0 ** 2)
+        E_fluctuations = xr.dot(
+            self._obj.e_vals ** 2, self._obj.eon, dims=self.state_dim
+        )
+        return np.sqrt(E_fluctuations - self.E_0 ** 2)
 
-    def get_beta(self):
+    @cached_property
+    def beta(self):
         """Return the temperature of the most propable canonical ensemble state."""
         beta = xr.apply_ufunc(
-            sim.get_beta,
-            results.e_vals.groupby(self.outer_dim),
-            E_0.groupby(self.outer_dim),
+            get_beta,
+            self._obj.e_vals.groupby(self.outer_dim),
+            self.E_0.groupby(self.outer_dim),
             input_core_dims=([self.state_dim], []),
+            kwargs={"beta_0": self.beta_0},
         )
         return beta
-    
 
+    @cached_property
+    def canonical(self):
+        beta = self.beta
+        weights_canonical = xr.apply_ufunc(
+            get_weights_canonical,
+            self._obj.e_vals.groupby(self.outer_dim),
+            beta.groupby(self.outer_dim),
+        )
+        return xr.dot(weights_canonical, self._obj.eev, dims=self.state_dim)
+
+    @cached_property
+    def diagonal(self):
+        return xr.dot(self._obj.eon, self._obj.eev, dims=self.state_dim)
+
+    @cached_property
+    def micro(self):
+        weights_micro = xr.apply_ufunc(
+            get_micro_ensemble,
+            self._obj.e_vals.groupby(self.outer_dim),
+            self.E_0.groupby(self.outer_dim),
+            kwargs={"delta_E": self.delta_E},
+        )
+        return xr.dot(weights_micro, self._obj.eev, dims=self.state_dim)
+
+    def get_summary(self):
+        return xr.Dataset(
+            {
+                "E_0": self.E_0,
+                "E_fluctuations": self.E_fluctuations,
+                "beta": self.beta,
+                "canonical": self.canonical,
+                "diagonal": self.diagonal,
+                "micro": self.micro,
+            }
+        )
