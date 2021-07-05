@@ -1,3 +1,4 @@
+import random
 import numpy as np
 from scipy.spatial import cKDTree
 from dataclasses import dataclass
@@ -66,3 +67,25 @@ class RandomChain(SimpleBlockade):
         for i in range(n - 2):
             pos = self._append_to_pos(pos)
         return pos
+
+
+@dataclass
+class Lattice:
+    distance: float = 1.0
+    filling: float = 1.0
+
+    def condition(self, i, j):
+        return random.random() < self.filling
+
+    def sample_positions(self, n, m=None):
+        distance = self.distance
+        if m is None:
+            m = n
+        cond_STIRAP = lambda i, j: random.random() < self.filling
+        return  np.array([[distance * i, distance * j, 0] for i in range(n) for j in range(m) if self.condition(i, j)])
+        
+@dataclass
+class StaggeredLattice(Lattice):
+    def condition(self, i, j):
+        cond_filling = super().condition(i, j)
+        return ((i + j) % 2 == 1) & cond_filling

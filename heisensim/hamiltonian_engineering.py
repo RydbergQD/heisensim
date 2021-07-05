@@ -2,7 +2,35 @@ import numpy as np
 import qutip as qt
 
 
-def wahuha(taus, h, N=1, max_time=None, phase=0):
+def wahuha_fields(h, phase=0):
+    return [
+        (0, 0, 0), (h*np.cos(phase), np.sin(phase), 0),
+        (0, 0, 0), (np.sin(phase), -h*np.cos(phase), 0),
+        (0, 0, 0), (np.sin(phase), h*np.cos(phase), 0),
+        (0, 0, 0), (-h*np.cos(phase), np.sin(phase), 0),
+        (0, 0, 0)
+    ]
+
+def amplitude_error(h, theta, direction="x"):
+    n1, n2 = list(theta * np.random.randn(2))
+    if direction == "x":
+        return (np.sqrt(1 - n1**2 - n2**2), n1, n2)
+    if direction == "y":
+        return (n2, np.sqrt(1 - n1**2 - n2**2), n1)
+    if direction == "z":
+        return (n1, n2, np.sqrt(1 - n1**2 - n2**2))
+
+def wahuha_fields_amp_errors(h, theta=0, N=1):
+    return [
+        (0, 0, 0), amplitude_error(h, theta, direction="x"),
+        (0, 0, 0), amplitude_error(-h, theta, direction="y"),
+        (0, 0, 0), amplitude_error(h, theta, direction="y"),
+        (0, 0, 0), amplitude_error(-h, theta, direction="x"),
+        (0, 0, 0)
+    ] * N
+
+
+def wahuha_durations(taus, h, N=1, max_time=None):
     if max_time is not None:
         N = round(max_time / (2 * sum(taus)))
     tau_1, tau_2, tau_3 = taus
@@ -16,14 +44,7 @@ def wahuha(taus, h, N=1, max_time=None, phase=0):
         tau_2 - tpi2, tpi2,
         tau_1 - tpi2/2
     ]
-    fields = [
-        (0, 0, 0), (h*np.cos(phase), np.sin(phase), 0),
-        (0, 0, 0), (np.sin(phase), -h*np.cos(phase), 0),
-        (0, 0, 0), (np.sin(phase), h*np.cos(phase), 0),
-        (0, 0, 0), (-h*np.cos(phase), np.sin(phase), 0),
-        (0, 0, 0)
-    ]
-    return durations * N, fields * N
+    return durations * N
 
 def get_times_sequence(durations, t0=0):
     times_sequence = [t0]
