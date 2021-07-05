@@ -6,3 +6,4 @@ from .spin_half import *
 from .thermalization import *
 from .utils import *
 from .mace import *
+from .hamiltonian_engineering import *
