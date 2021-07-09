@@ -112,7 +112,7 @@ class WAHUHA:
             result = qt.sesolve(
                 [H_int, H_ext], psi0, time_interval,
                 e_ops=e_ops, options=options, progress_bar=progress_bar, _safe_mode=_safe_mode,
-                args={"sigma": duration/4, 't0': t0}
+                args=[t0, duration/4]
             )
             
             t0 = t0 + duration
