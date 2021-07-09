@@ -85,6 +85,10 @@ class WAHUHA:
                 time_interval = np.append(time_interval, t1)
         return time_interval
 
+    @staticmethod
+    def gaussian(t, t0, sigma):
+        return 4/(0.9545 * np.sqrt(2*np.pi)) * np.exp(-(t-t0 - sigma*2)**2/(2*sigma**2))
+
     def schroedinger(self, model, psi0, dt=None, e_ops=None,
      options=None, progress_bar=None, _safe_mode=True, gaussian=False):
         if options is None:
@@ -101,7 +105,7 @@ class WAHUHA:
             time_interval = self.get_time_interval(t0, duration, dt)
 
             if gaussian:
-                H_ext = [model.hamiltonian_field(*field), r'4/(0.9545 * np.sqrt(2*np.pi)) * np.exp(-(t-t0 - sigma*2)**2/(2*sigma**2))']
+                H_ext = [model.hamiltonian_field(*field), self.gaussian]
             else:
                 H_ext = model.hamiltonian_field(*field)
             result = qt.sesolve(
