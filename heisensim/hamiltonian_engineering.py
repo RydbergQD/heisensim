@@ -99,7 +99,8 @@ class WAHUHA:
 
     @staticmethod
     def gaussian(t, args):
-        t0, sigma = args
+        t0 = args["t0"]
+        sigma = args["sigma"]
         return (
             4
             / (0.9545 * np.sqrt(2 * np.pi))
@@ -142,7 +143,7 @@ class WAHUHA:
                 options=options,
                 progress_bar=progress_bar,
                 _safe_mode=_safe_mode,
-                args=[t0, duration / 4],
+                args={"t0": t0, "sigma": duration / 4},
             )
 
             t0 = t0 + duration
