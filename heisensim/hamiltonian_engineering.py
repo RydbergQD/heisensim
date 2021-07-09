@@ -86,7 +86,8 @@ class WAHUHA:
         return time_interval
 
     @staticmethod
-    def gaussian(t, t0, sigma):
+    def gaussian(t, args):
+        t0, sigma = args
         return 4/(0.9545 * np.sqrt(2*np.pi)) * np.exp(-(t-t0 - sigma*2)**2/(2*sigma**2))
 
     def schroedinger(self, model, psi0, dt=None, e_ops=None,
