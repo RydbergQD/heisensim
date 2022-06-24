@@ -4,6 +4,5 @@ qutip
 netcdf4
 xarray
 h5py
-heisensim
 pandas
 setuptools

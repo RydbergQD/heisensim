@@ -16,8 +16,10 @@ def get_energy_diff(ev, beta, E_0):
     return np.abs(weights @ ev - E_0)
 
 
-def get_beta(ev, E_0, beta_0=0):
-    return minimize_scalar(lambda beta: get_energy_diff(np.array(ev), beta, E_0)).x
+def get_beta(ev, E_0, beta_0=0, J_median=1):
+    return minimize_scalar(
+        lambda beta: get_energy_diff(np.array(ev), beta, E_0), bracket=[-0.001 * J_median, 0.001 * J_median]
+    ).x
 
 
 def get_canonical_ensemble(ev, E_0, beta_0=0):
@@ -42,19 +44,18 @@ def diagonal_ensemble(eon):
 class ThermalEnsemble:
     state_dim = "state"
 
-    def __init__(self, xarray_obj, beta_0=0, delta_E=10):
+    def __init__(self, xarray_obj, beta_0=0, delta_E=10, J_median=1):
         self._obj = xarray_obj
         self.beta_0 = beta_0
         self.delta_E = delta_E
+        self.J_median = J_median
 
         self.outer_dim = self.extract_outer_dim()
 
     def extract_outer_dim(self):
         outer_dims = list(set(self._obj.dims.keys()) - {self.state_dim})
         if len(outer_dims) != 1:
-            raise Warning(
-                "All functions that depend on xarray groupby capabilities won't work"
-            )
+            raise Warning("All functions that depend on xarray groupby capabilities won't work")
         return outer_dims[0]
 
     @cached_property
@@ -65,10 +66,8 @@ class ThermalEnsemble:
     @cached_property
     def E_fluctuations(self):
         """Return the energy fluctuations of the initial state."""
-        E_fluctuations = xr.dot(
-            self._obj.e_vals ** 2, self._obj.eon, dims=self.state_dim
-        )
-        return np.sqrt(E_fluctuations - self.E_0 ** 2)
+        E_fluctuations = xr.dot(self._obj.e_vals**2, self._obj.eon, dims=self.state_dim)
+        return np.sqrt(E_fluctuations - self.E_0**2)
 
     @cached_property
     def beta(self):
@@ -78,7 +77,7 @@ class ThermalEnsemble:
             self._obj.e_vals.groupby(self.outer_dim),
             self.E_0.groupby(self.outer_dim),
             input_core_dims=([self.state_dim], []),
-            kwargs={"beta_0": self.beta_0},
+            kwargs={"beta_0": self.beta_0, "J_median": self.J_median},
         )
         return beta
 

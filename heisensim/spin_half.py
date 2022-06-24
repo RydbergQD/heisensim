@@ -10,7 +10,7 @@ si = qt.qeye(2)
 up = qt.basis(2, 0)
 down = qt.basis(2, 1)
 up_x = 1/np.sqrt(2) * (up + down)
-up_y = 1/np.sqrt(2) * (up - down)
+down_x = 1/np.sqrt(2) * (up - down)
 
 
 def bloch_state(theta=np.pi/2, phi=0):

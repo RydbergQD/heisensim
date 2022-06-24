@@ -182,7 +182,7 @@ class WAHUHA_amp_errors(WAHUHA):
         n1, n2 = list(self.phase_error * np.random.randn(2))
         if np.isclose(phase, 0):
             return (h * np.sqrt(1 - n1 ** 2 - n2 ** 2), h * n1, h * n2)
-        else:psett
+        else:
             return (h * n2, h * np.sqrt(1 - n1 ** 2 - n2 ** 2), h * n1)
 
 

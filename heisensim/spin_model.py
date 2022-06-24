@@ -1,9 +1,21 @@
-from scipy.spatial.distance import pdist, squareform
-from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from heisensim.spin_half import *
+from dataclasses import dataclass
 from typing import Any
-from heisensim.spin_half import correlator
+
+import numpy as np
+import qutip as qt
+from scipy.spatial.distance import pdist, squareform
+
+from heisensim.spin_half import (
+    correlator,
+    single_spin_op,
+    sx,
+    sy,
+    symmetrize_op,
+    symmetrize_state,
+    sz,
+    up_x,
+)
 
 
 @dataclass()
@@ -24,9 +36,9 @@ class InteractionParams(ABC):
             return int_mat
 
         mf = int_mat.sum(axis=1)
-        if normalization == 'mean':
+        if normalization == "mean":
             int_mat /= np.mean(mf)
-        elif normalization == 'median':
+        elif normalization == "median":
             int_mat /= np.median(mf)
         return int_mat
 
@@ -42,7 +54,7 @@ class PowerLaw(InteractionParams):
 
         dist = squareform(pdist(pos))
         np.fill_diagonal(dist, 1)
-        interaction = coupling * dist**(-exponent)
+        interaction = coupling * dist ** (-exponent)
         np.fill_diagonal(interaction, 0)
         return interaction
 
@@ -63,7 +75,7 @@ class DipoleCoupling(PowerLaw):
     def dipole_interaction(self, u, v):
         d = u - v
         dist = np.linalg.norm(d)
-        return self.coupling * (1 - 3 * (d[2] / dist) ** 2) / dist ** self.exponent
+        return self.coupling * (1 - 3 * (d[2] / dist) ** 2) / dist**self.exponent
 
     # noinspection PyTypeChecker
     def _get_interaction(self, pos):
@@ -77,11 +89,10 @@ class XYZ:
     zz: float = 1
 
     def coupling(self, model, i, j):
-        N = model.N
         return (
-                self.xx * model.correlator(sx, i, j)
-                + self.yy * model.correlator(sy, i, j)
-                + self.zz * model.correlator(sz, i, j)
+            self.xx * model.correlator(sx, i, j)
+            + self.yy * model.correlator(sy, i, j)
+            + self.zz * model.correlator(sz, i, j)
         )
 
 
@@ -97,7 +108,7 @@ class Ising(XYZ):
 
 class XX(XYZ):
     def __init__(self):
-        super().__init__(1, 1,  0)
+        super().__init__(1, 1, 0)
 
 
 class SpinModel:
@@ -121,6 +132,18 @@ class SpinModel:
     @property
     def J_median(self):
         return np.median(self.int_mat_mf)
+
+    @property
+    def int_mat_nn(self):
+        return self.int_mat.max(axis=1)
+
+    @property
+    def J_nn_mean(self):
+        return self.int_mat_nn.mean()
+
+    @property
+    def J_nn_median(self):
+        return np.median(self.int_mat_nn)
 
     @property
     def N(self):
@@ -196,7 +219,9 @@ class SpinModelSym(SpinModel):
 
     def correlator(self, op, i, j):
         c = correlator(op, i, j, self.N)
-        return self.symmetrize_op(c)  # self.single_spin_op(op, i) @ self.single_spin_op(op, j)
+        return self.symmetrize_op(
+            c
+        )  # self.single_spin_op(op, i) @ self.single_spin_op(op, j)
 
     def product_state(self, state=up_x):
         psi0 = state.unit()
