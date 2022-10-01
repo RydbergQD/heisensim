@@ -1,7 +1,7 @@
 /heisensim.egg-info/
 /.idea
 /.vscode
-/.DS_Store
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -27,3 +27,4 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+heisensim/.DS_Store
