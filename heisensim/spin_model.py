@@ -4,7 +4,7 @@ from typing import Any
 
 import numpy as np
 import qutip as qt
-from scipy.spatial.distance import pdist, squareform
+from scipy.spatial.distance import pdist, squareform, euclidean
 
 from heisensim.spin_half import (
     correlator,
@@ -47,6 +47,10 @@ class InteractionParams(ABC):
 class PowerLaw(InteractionParams):
     exponent: float = 6
     coupling: float = 1
+
+    def get_interaction_pair(self, pos1, pos2):
+        dist = euclidean(pos1, pos2)
+        return self.coupling * dist ** (-self.exponent)
 
     def _get_interaction(self, pos):
         coupling = self.coupling
