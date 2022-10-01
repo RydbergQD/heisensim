@@ -28,3 +28,4 @@ var/
 .installed.cfg
 *.egg
 heisensim/.DS_Store
+.DS_Store
