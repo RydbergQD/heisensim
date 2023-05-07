@@ -18,13 +18,14 @@ def get_energy_diff(ev, beta, E_0):
 
 def get_beta(ev, E_0, beta_0=0, J_median=1):
     return minimize_scalar(
-        lambda beta: get_energy_diff(np.array(ev), beta, E_0), bracket=[-0.001 * J_median, 0.001 * J_median]
+        lambda beta: get_energy_diff(np.array(ev), beta, E_0),
+        bracket=[-0.001 * J_median, 0.001 * J_median],
     ).x
 
 
 def get_canonical_ensemble(ev, E_0, beta_0=0):
     beta = get_beta(ev, E_0, beta_0=beta_0)
-    return get_weights_canonical(beta.x, ev)
+    return get_weights_canonical(beta, ev)
 
 
 def get_micro_ensemble(ev, E_0, delta_E=10):
@@ -55,7 +56,9 @@ class ThermalEnsemble:
     def extract_outer_dim(self):
         outer_dims = list(set(self._obj.dims.keys()) - {self.state_dim})
         if len(outer_dims) != 1:
-            raise Warning("All functions that depend on xarray groupby capabilities won't work")
+            raise Warning(
+                "All functions that depend on xarray groupby capabilities won't work"
+            )
         return outer_dims[0]
 
     @cached_property
@@ -66,7 +69,9 @@ class ThermalEnsemble:
     @cached_property
     def E_fluctuations(self):
         """Return the energy fluctuations of the initial state."""
-        E_fluctuations = xr.dot(self._obj.e_vals**2, self._obj.eon, dims=self.state_dim)
+        E_fluctuations = xr.dot(
+            self._obj.e_vals**2, self._obj.eon, dims=self.state_dim
+        )
         return np.sqrt(E_fluctuations - self.E_0**2)
 
     @cached_property

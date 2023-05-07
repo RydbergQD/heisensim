@@ -9,3 +9,4 @@ from .mace import *
 from .hamiltonian_engineering import *
 from .plot_utils import *
 from .combination_clustering import *
+from .pair_model import *

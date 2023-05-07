@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
+from matplotlib.pyplot import axis
 
 import numpy as np
 import qutip as qt
@@ -192,12 +193,18 @@ class SpinModel:
     def get_op_list(self, op):
         return [self.single_spin_op(op, n) for n in range(self.N)]
 
+    def magn(self, op=sx):
+        return 1 / self.N * sum(self.get_op_list(op))
+
     def product_state(self, state=up_x):
         psi0 = state.unit()
         return qt.tensor(self.N * [psi0])
 
     def symmetrize(self):
         return SpinModelSym(self.int_mat, self.int_type)
+
+    def emch_radin(self, t):
+        return 0.5 * np.prod(np.cos(2*self.int_mat * t/4), axis=1)
 
 
 class SpinModelSym(SpinModel):
