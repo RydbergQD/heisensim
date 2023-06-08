@@ -56,7 +56,7 @@ class PairClusterer(Clusterer):
     def find_pairs(self):
         pairs = []
         inter_mat = np.abs(self.inter_mat.copy())
-        for _ in tqdm(range(inter_mat.shape[0] // 2)):
+        for _ in tqdm(range(inter_mat.shape[0] // 2), desc="finding pairs"):
             nn_pair = np.unravel_index(np.nanargmax(inter_mat), inter_mat.shape)
             pairs.append(nn_pair)
             inter_mat[nn_pair[0], :] = np.nan
@@ -76,7 +76,7 @@ class PairClusterer(Clusterer):
 
     def get_interactions_between_pairs(self, pairs, reduce=np.mean, progress=False):
         if progress:
-            iterator = tqdm(pairs)
+            iterator = tqdm(pairs, desc="get interactions between pairs")
         else:
             iterator = pairs
         J_inter_list = np.array(
@@ -159,10 +159,15 @@ class SinglePair:
         return np.dot(get_canonical_ensemble(ev, E0, beta_0=beta_0), eevs)
 
     def time_evolution(self, t, h):
+        # return 0.5 * np.cos(2 * np.sqrt(self.j**2) * t)
         return self.j**2 * np.cos(2 * np.sqrt(h**2 + self.j**2) * t)/(2 * (h**2 + self.j**2)) + self.get_diagonal(h)
 
     def time_differential(self, t, h):
         return -self.j**2 * np.sin(2 * np.sqrt(h**2 + self.j**2) * t)
+    
+    def time_differential2(self, t, y, h):
+        h_eff = h + self.J_inter_list @ y
+        return -self.j**2 * np.sin(2 * np.sqrt(h_eff**2 + self.j**2) * t)/np.sqrt(h_eff**2 + self.j**2)
 
 
 @dataclass
