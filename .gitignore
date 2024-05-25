@@ -12,20 +12,20 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-env/
-build/
-develop-eggs/
+# env/
+# build/
+# develop-eggs/
 dist/
 downloads/
-eggs/
-.eggs/
+# eggs/
+# .eggs/
 lib/
 lib64/
 parts/
 sdist/
 var/
-*.egg-info/
-.installed.cfg
-*.egg
+# *.egg-info/
+# .installed.cfg
+# *.egg
 heisensim/.DS_Store
 .DS_Store
